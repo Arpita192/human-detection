@@ -1,0 +1,25 @@
+{
+  "name": "electron-yolo-human-detection",
+  "version": "1.0.0",
+  "description": "An Electron app to display a real-time human detection feed from a Python script using YOLOv8.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "Electron",
+    "Python",
+    "OpenCV",
+    "YOLOv8",
+    "Object Detection"
+  ],
+  "author": "Gemini",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.1.0"
+  },
+  "dependencies": {
+    "csv-parser": "^3.0.0"
+  }
+}
+

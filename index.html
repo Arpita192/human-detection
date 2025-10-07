@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --background-start: #F3F4F6; /* light gray */
+            --background-end: #E5E7EB; /* darker light gray */
+            --text-primary: #1F2937; /* dark text */
+            --text-secondary: #4B5563; /* medium text */
+            --sidebar-bg: #FFFFFF;
+            --border-color: #D1D5DB;
+            --accent-color: #3B82F6; /* blue */
+            --accent-text: #FFFFFF;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --icon-color: #6B7280;
+        }
+        html.dark {
+            --background-start: #111827; /* dark blue */
+            --background-end: #1F2937; /* darker blue */
+            --text-primary: #F9FAFB; /* light text */
+            --text-secondary: #D1D5DB; /* medium light text */
+            --sidebar-bg: #1F2937;
+            --border-color: #374151;
+            --accent-color: #60A5FA; /* light blue */
+            --accent-text: #111827;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --icon-color: #9CA3AF;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--background-start), var(--background-end));
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+        .sidebar { background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color); box-shadow: 2px 0 10px var(--shadow-color); }
+        .nav-item { border-left: 3px solid transparent; }
+        .nav-item.active { border-left-color: var(--accent-color); background-color: var(--background-start); }
+        .nav-item:hover { background-color: var(--background-start); }
+        .start-button { background-color: var(--accent-color); color: var(--accent-text); }
+        .start-button:hover { opacity: 0.9; }
+        .icon { color: var(--icon-color); }
+        .table-header { background-color: var(--background-end); }
+        .date-input { background-color: var(--background-start); border: 1px solid var(--border-color); }
+    </style>
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
+</head>
+<body class="w-screen h-screen">
+    <div class="flex h-full">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 flex flex-col p-4 space-y-6">
+            <div class="text-2xl font-bold">Build Application</div>
+            <nav class="flex-grow">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" id="nav-detection" class="nav-item active flex items-center p-3 rounded-lg transition-all">
+                            <i class="ph-user-focus icon text-2xl mr-3"></i>
+                            <span class="font-medium">Human Detection</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-folder" class="nav-item flex items-center p-3 rounded-lg transition-all">
+                            <i class="ph-folder icon text-2xl mr-3"></i>
+                            <span class="font-medium">My Folder</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-settings" class="nav-item flex items-center p-3 rounded-lg transition-all">
+                            <i class="ph-gear icon text-2xl mr-3"></i>
+                            <span class="font-medium">Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <button id="start-stop-btn" class="start-button w-full flex items-center justify-center p-3 rounded-lg font-semibold shadow-md transition-all">
+                <i class="ph-camera-rotate text-2xl mr-2"></i>
+                <span>Start Detection</span>
+            </button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8 flex flex-col">
+            <h2 class="text-3xl font-bold mb-4 text-secondary">Results</h2>
+            
+            <!-- Human Detection View -->
+            <div id="view-detection" class="flex-grow bg-sidebar-bg rounded-xl shadow-inner p-2 flex items-center justify-center">
+                <div id="placeholder" class="text-center text-secondary">
+                    <i class="ph-video-camera text-8xl"></i>
+                    <p class="mt-4 text-xl">Video feed will appear here</p>
+                    <p class="text-sm">Click "Start Detection" to begin</p>
+                </div>
+                <img id="video-feed" class="hidden w-full h-full object-contain rounded-lg" />
+            </div>
+
+            <!-- Folder / Log Report View -->
+            <div id="view-folder" class="hidden flex-grow flex-col">
+                <div class="flex items-center mb-4">
+                    <label for="date-filter" class="mr-2 font-medium">Filter by Date:</label>
+                    <input type="date" id="date-filter" class="date-input p-2 rounded-lg">
+                </div>
+                <div class="flex-grow bg-sidebar-bg rounded-xl shadow-inner overflow-auto">
+                    <table class="w-full text-left">
+                        <thead class="sticky top-0">
+                            <tr class="table-header">
+                                <th class="p-4 font-semibold">Date</th>
+                                <th class="p-4 font-semibold">Time</th>
+                                <th class="p-4 font-semibold">Humans Detected</th>
+                                <th class="p-4 font-semibold">Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody id="log-table-body">
+                            <!-- Rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="view-settings" class="hidden flex-grow">
+                 <div class="bg-sidebar-bg p-6 rounded-xl shadow-inner">
+                    <h3 class="text-2xl font-bold mb-4">Theme</h3>
+                    <div class="flex items-center space-x-4">
+                        <button id="theme-light-btn" class="flex-1 p-4 rounded-lg border-2 border-accent-color text-center font-semibold">
+                            Light
+                        </button>
+                         <button id="theme-dark-btn" class="flex-1 p-4 rounded-lg border-2 border-border-color text-center font-semibold">
+                            Dark
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        // --- DOM Elements ---
+        const startStopBtn = document.getElementById('start-stop-btn');
+        const videoFeed = document.getElementById('video-feed');
+        const placeholder = document.getElementById('placeholder');
+        
+        const navItems = {
+            detection: document.getElementById('nav-detection'),
+            folder: document.getElementById('nav-folder'),
+            settings: document.getElementById('nav-settings')
+        };
+        const views = {
+            detection: document.getElementById('view-detection'),
+            folder: document.getElementById('view-folder'),
+            settings: document.getElementById('view-settings')
+        };
+
+        const logTableBody = document.getElementById('log-table-body');
+        const dateFilter = document.getElementById('date-filter');
+        const themeLightBtn = document.getElementById('theme-light-btn');
+        const themeDarkBtn = document.getElementById('theme-dark-btn');
+
+        // --- State ---
+        let isDetecting = false;
+        let allLogs = [];
+        
+        // --- NEW: Rendering variables ---
+        let latestFrameData = null;
+        let animationFrameId = null;
+
+        // --- Functions ---
+
+        function switchView(viewName) {
+            Object.values(navItems).forEach(item => item.classList.remove('active'));
+            Object.values(views).forEach(view => view.classList.add('hidden'));
+
+            navItems[viewName].classList.add('active');
+            views[viewName].classList.remove('hidden');
+
+            if (viewName === 'folder') {
+                ipcRenderer.send('read-log-file');
+            }
+        }
+
+        function renderLogs(logsToRender) {
+            logTableBody.innerHTML = '';
+            if (logsToRender.length === 0) {
+                 logTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-secondary">No logs found.</td></tr>';
+                 return;
+            }
+            logsToRender.forEach(log => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-border-color';
+                row.innerHTML = `
+                    <td class="p-4">${log.Date}</td>
+                    <td class="p-4">${log.Time}</td>
+                    <td class="p-4">${log['Humans Detected']}</td>
+                    <td class="p-4">${log.Duration}</td>
+                `;
+                logTableBody.appendChild(row);
+            });
+        }
+        
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                themeDarkBtn.classList.add('border-accent-color');
+                themeLightBtn.classList.remove('border-accent-color');
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeLightBtn.classList.add('border-accent-color');
+                themeDarkBtn.classList.remove('border-accent-color');
+            }
+        }
+
+        // --- NEW: Rendering Loop Function ---
+        function updateFeed() {
+            if (latestFrameData) {
+                videoFeed.src = 'data:image/jpeg;base64,' + latestFrameData;
+                // Clear the frame data so we don't re-render the same frame
+                latestFrameData = null; 
+            }
+            // Request the next frame
+            animationFrameId = requestAnimationFrame(updateFeed);
+        }
+
+        // --- Event Listeners ---
+        startStopBtn.addEventListener('click', () => {
+            isDetecting = !isDetecting;
+            const btnText = startStopBtn.querySelector('span');
+            const btnIcon = startStopBtn.querySelector('i');
+
+            if (isDetecting) {
+                ipcRenderer.send('start-detection');
+                btnText.textContent = 'Stop Detection';
+                btnIcon.className = 'ph-stop-circle text-2xl mr-2';
+                placeholder.classList.add('hidden');
+                videoFeed.classList.remove('hidden');
+                
+                // NEW: Start the rendering loop
+                animationFrameId = requestAnimationFrame(updateFeed);
+            } else {
+                ipcRenderer.send('stop-detection');
+                btnText.textContent = 'Start Detection';
+                btnIcon.className = 'ph-camera-rotate text-2xl mr-2';
+                videoFeed.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                
+                // NEW: Stop the rendering loop
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+                latestFrameData = null;
+            }
+        });
+
+        navItems.detection.addEventListener('click', () => switchView('detection'));
+        navItems.folder.addEventListener('click', () => switchView('folder'));
+        navItems.settings.addEventListener('click', () => switchView('settings'));
+
+        dateFilter.addEventListener('change', () => {
+            const selectedDate = dateFilter.value;
+            if (!selectedDate) {
+                renderLogs(allLogs);
+            } else {
+                const filteredLogs = allLogs.filter(log => log.Date === selectedDate);
+                renderLogs(filteredLogs);
+            }
+        });
+
+        themeLightBtn.addEventListener('click', () => applyTheme('light'));
+        themeDarkBtn.addEventListener('click', () => applyTheme('dark'));
+
+        // --- IPC Renderers ---
+        // NEW: This listener just stores the latest frame. The rendering loop handles display.
+        ipcRenderer.on('python-data', (event, data) => {
+            if (isDetecting) {
+                latestFrameData = data;
+            }
+        });
+
+        ipcRenderer.on('python-error', (event, err) => {
+            console.error('Python Error:', err);
+        });
+
+        ipcRenderer.on('log-file-data', (event, logs) => {
+            allLogs = logs;
+            renderLogs(allLogs);
+        });
+
+        // --- Initial Setup ---
+        switchView('detection'); // Set initial view
+        applyTheme('light'); // Set initial theme
+    </script>
+</body>
+</html>
+

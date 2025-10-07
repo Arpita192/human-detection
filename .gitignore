@@ -1,0 +1,21 @@
+Node.js dependencies
+/node_modules
+
+Python cache
+pycache/
+*.pyc
+
+YOLOv8 Model Weights
+These are downloaded automatically on the first run
+*.pt
+
+Log files and user-generated data
+*.csv
+
+Optional: IDE / OS specific files
+.vscode/
+.idea/
+.DS_Store
+
+npm debug logs
+npm-debug.log*
